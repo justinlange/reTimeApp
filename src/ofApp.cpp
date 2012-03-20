@@ -34,7 +34,7 @@ int picY=0; //short for pixelIndexCounterY
 
 //---------showing the present or past-----------
 
-int currentFrame = 1;
+int currentFrame = 2;
 int previousFrame = 0;
 string frameResult;
 ostringstream fileNameToLoad;
@@ -42,9 +42,9 @@ int skip;
 int width;
 int height;
 int startY = 0;
-int startX = 200;
-int endBufferY = 10;
-int endBufferX = 100;
+int startX = 0;
+int endBufferY = 0;
+int endBufferX = 0;
 
 //---------creating a mesh out of the present or past-----------
 
@@ -90,6 +90,11 @@ void ofApp::setup() {
 	kinect.setRegistration(true);
 	kinect.open();
     presentImg.allocate(320, 240, OF_IMAGE_COLOR_ALPHA);
+    pastImg.allocate(320, 240, OF_IMAGE_COLOR_ALPHA);
+
+    
+    lastTime = ofGetElapsedTimeMillis();
+    currentTime = ofGetElapsedTimeMillis();
     
 //---------mesh stuff-----------
     
@@ -112,8 +117,7 @@ void ofApp::setup() {
      
      */
     
-    lastTime = ofGetElapsedTimeMillis();
-    currentTime = ofGetElapsedTimeMillis();
+
 }
 
 
@@ -122,7 +126,7 @@ void ofApp::update() {
     
     currentTime = ofGetElapsedTimeMillis();
 
-//printf("currentTime is: %d,  lastTime is: %d\n", currentTime, lastTime);
+printf("currentTime is: %d,  lastTime is: %d\n", currentTime, lastTime);
     
     
 //---------RECORDING the present-----------
@@ -263,10 +267,10 @@ bool ofApp::recordReady() {
     if (recordingOn == true){
         if (kinect.isFrameNew()) { 
             if(currentTime > lastTime + recordInterval) {
-                lastTime = currentTime;
                 if (frameNumber < numberOfFramesToRecord){
                     frameNumber = frameNumber + 1;
-                    printf("time: %d frame number: %d\n", currentTime/1000, frameNumber);
+                    lastTime = currentTime;
+                    printf("time: %d recording frame number: %d\n", currentTime/1000, frameNumber);
                     return true;
             
                 }
