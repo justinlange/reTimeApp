@@ -21,11 +21,13 @@ public:
     
 	
 	ofxKinect kinect;
-    ofImage recordImg;
+    ofImage presentImg;
 
-    ofImage displayImg;
+    ofImage pastImg;
     ofMesh mesh;
     ofEasyCam cam;
+    
+    
 
 
 
