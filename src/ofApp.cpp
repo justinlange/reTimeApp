@@ -1,4 +1,5 @@
 #include "ofApp.h"
+#include "math.h"
 
 #include <string>
 #include <sstream>
@@ -17,12 +18,13 @@ using namespace std;
  
  
  */
-
+int  numberOfFramesToRecord = 320;
 bool recordingOn = false;
+bool kinectDisplayEnabled = false;
 int frameNumber = 0;
 ostringstream fileNameToSave;
 int lastTime = 0;
-int recordInterval = 1000;
+int recordInterval = 30;
 int currentTime = 0; 
 int picX=0; //short for pixelIndexCounterX
 int picY=0; //short for pixelIndexCounterY
@@ -48,7 +50,7 @@ void ofApp::update() {
     
     currentTime = ofGetElapsedTimeMillis();
 
-    printf("currentTime is: %d,  lastTime is: %d/n", currentTime, lastTime);
+//    printf("currentTime is: %d,  lastTime is: %d\n", currentTime, lastTime);
     
     
 //-----------------------record and store information about the present-------
@@ -56,23 +58,34 @@ void ofApp::update() {
     kinect.update();
     
     if(ofGetKeyPressed(' ')) {
-        recordingOn =! recordingOn;
-        printf("we are recording: %d/n", recordingOn);
-    }    
+        recordingOn = true;
+        printf("we are recording: %d\n", recordingOn);
+    }
     
-	if(recordReady()) {
+    if(ofGetKeyPressed('s')) {
+        recordingOn = false;
+        printf("we are NO LONGER recording \n");
+    }
+    
+    
+    
+    if(ofGetKeyPressed('d')) {
+        kinectDisplayEnabled =! kinectDisplayEnabled;
+    }
+    
+	if(recordReady() == true) {
         ofPixels& depthPixels = kinect.getDepthPixelsRef();
         ofPixels& colorPixels = kinect.getPixelsRef();
 		
         picX = 0;
         
-        for(int x = 0; x < 640; x+=2) {
+        for(int x = 0; x < 640; x=x+2) {
             picX++;
             picY=0;
-            for(int y = 0; y < 480; y+=2) {
+            for(int y = 0; y < 480; y=y+2) {
                 picY++;                
-                ofColor color = colorPixels.getColor(picX, picY);
-                ofColor depth = depthPixels.getColor(picX, picY);
+                ofColor color = colorPixels.getColor(x, y);
+                ofColor depth = depthPixels.getColor(x, y);
                 recordImg.setColor(picX, picY, ofColor(color, depth.getBrightness()));
 				
             }
@@ -95,9 +108,11 @@ void ofApp::draw() {
     
 	ofBackground(0);
 	ofSetColor(255, 255, 255);
-	kinect.drawDepth(0, 0, 640, 480);
-	kinect.draw(0, 480, 640, 480);
     
+    if(kinectDisplayEnabled == true){
+    	kinect.drawDepth(0, 0, 640, 480);
+        kinect.draw(0, 480, 640, 480);
+    }
 
 }
 
@@ -110,13 +125,16 @@ bool ofApp::recordReady() {
         if (kinect.isFrameNew()) { 
             if(currentTime > lastTime + recordInterval) {
                 lastTime = currentTime;
-                if (frameNumber < 60){
+                if (frameNumber < numberOfFramesToRecord){
                     frameNumber = frameNumber + 1;
+                    printf("time: %d frame number: %d\n", currentTime/1000, frameNumber);
                     return true;
             
                 }
             }
         }
+    }else{
+        return false;
     }
 }
 
