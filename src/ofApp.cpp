@@ -24,17 +24,20 @@ using namespace std;
 int  numberOfFramesToRecord = 320;
 bool recordingOn = false;
 bool kinectDisplayEnabled = false;
-int frameNumber = 2;  //will make the first frame recorded "2"
+int mostRecentFrame = 2;  //will make the first frame recorded "2"
 ostringstream fileNameToSave;
 int lastTime = 0;
 int recordInterval = 30;
 int currentTime = 0; 
 int picX=0; //short for pixelIndexCounterX
 int picY=0; //short for pixelIndexCounterY
+int numberOfFramesRecorded = 0;
+
 
 //---------showing the present or past-----------
 
-int currentFrame = 2;
+int timeOffsetFrames = 0;
+int frameToShow = 2;
 int previousFrame = 0;
 string frameResult;
 ostringstream fileNameToLoad;
@@ -101,7 +104,7 @@ void ofApp::setup() {
     ofSetVerticalSync(true);
     pastImg.loadImage("1.png"); //this means we'll always have to have one image to start!
     mesh.setMode(OF_PRIMITIVE_TRIANGLES); //rather than points
-    skip = 5;	
+    skip = 3;	
 	width = pastImg.getWidth();
 	height = pastImg.getHeight();
 	ofVec3f zero(0, 0, 0);
@@ -170,33 +173,19 @@ printf("currentTime is: %d,  lastTime is: %d\n", currentTime, lastTime);
        
         
             ostringstream fileNameToSave;
-            fileNameToSave << frameNumber << ".png";
+            fileNameToSave << mostRecentFrame << ".png";
             string result = fileNameToSave.str();
 			presentImg.saveImage(result);
+            numberOfFramesRecorded++;
+
 
     }
 
 //---------SHOWING the present or past-----------
 
-if (ofGetKeyPressed('p') || ofGetKeyPressed('o')){
-    printf("we are viewing frame number: %d\n", currentFrame);
-    if(ofGetKeyPressed('p')){
-        if(currentFrame > 2){
-            currentFrame--;
-        }else{
-            currentFrame = 2;
-        }
-    }
-    if(ofGetKeyPressed('o')){
-        if (currentFrame < 320){
-            currentFrame++;
-        }else{
-            currentFrame = 320;
-        }
-        }
-    
+    frameToShow = mostRecentFrame - timeOffsetFrames + 1;
     ostringstream fileNameToLoad;     
-    fileNameToLoad << currentFrame << ".png";     
+    fileNameToLoad << frameToShow << ".png";     
     frameResult = fileNameToLoad.str(); 
     pastImg.loadImage(ofToString(frameResult));
     mesh.clear();
@@ -220,18 +209,41 @@ if (ofGetKeyPressed('p') || ofGetKeyPressed('o')){
             ofVec3f ne = getVertexFromImg(pastImg, x + skip, y);
             ofVec3f sw = getVertexFromImg(pastImg, x, y + skip);
             ofVec3f se = getVertexFromImg(pastImg, x + skip, y + skip);
-           
+            
             /*
              check for bad data i.e. making sure that nothing 
-            is zero, otherwise vertices point to front of screen
+             is zero, otherwise vertices point to front of screen
              */
-
+            
             if(nw != 0 && ne != 0 && sw != 0 && se != 0) {                 
                 addTexCoords(mesh, nwi, nei, sei, swi);
                 addFace(mesh, nw, ne, se, sw);                  
-                }
             }
         }
+    }    
+    
+    
+    
+if (ofGetKeyPressed('p') || ofGetKeyPressed('o')){
+    printf("we are viewing frame number: %d\n", timeOffsetFrames);
+    if(ofGetKeyPressed('p')){
+        if(timeOffsetFrames < numberOfFramesRecorded-1){
+            timeOffsetFrames = numberOfFramesRecorded;
+        }else{
+            timeOffsetFrames++;
+        }
+    }
+    if(ofGetKeyPressed('o')){
+        if (timeOffsetFrames > 1){
+            timeOffsetFrames--;
+        }else{
+            timeOffsetFrames = 1;
+        }
+        }
+    
+    if(ofGetKeyPressed('i')){
+        timeOffsetFrames = 0;
+    }
     }    
 }   
 
@@ -267,10 +279,10 @@ bool ofApp::recordReady() {
     if (recordingOn == true){
         if (kinect.isFrameNew()) { 
             if(currentTime > lastTime + recordInterval) {
-                if (frameNumber < numberOfFramesToRecord){
-                    frameNumber = frameNumber + 1;
-                    lastTime = currentTime;
-                    printf("time: %d recording frame number: %d\n", currentTime/1000, frameNumber);
+                lastTime = currentTime;
+                if (mostRecentFrame < numberOfFramesToRecord){
+                    mostRecentFrame = mostRecentFrame + 1;
+                    printf("time: %d recording frame number: %d\n", currentTime/1000, mostRecentFrame);
                     return true;
             
                 }
